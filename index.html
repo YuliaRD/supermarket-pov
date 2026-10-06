@@ -24,7 +24,7 @@ button{font:inherit}
 .shelf-layer{position:absolute;inset:0;z-index:12;opacity:0;pointer-events:none;transition:opacity .28s,transform .45s;transform-origin:50% 0}.scene.side-view .shelf-layer{opacity:1;pointer-events:auto;transform:scaleY(.86)}
 .slot{position:absolute;border:0;background:transparent;padding:0;cursor:grab;touch-action:none;border-radius:10px;transition:filter .16s,transform .16s}
 .slot:hover{filter:drop-shadow(0 0 10px rgba(255,255,255,.5));transform:scale(1.025)}
-.price{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%) scaleY(1.16);padding:4px 6px;border-radius:3px;background:#fffef7;color:#151716;font-weight:800;font-size:clamp(10px,1.2vw,15px);line-height:1;box-shadow:0 2px 4px rgba(0,0,0,.42);white-space:nowrap;pointer-events:none}
+.price{position:absolute;left:50%;bottom:1px;z-index:2;transform:translateX(-50%) scaleY(1.16);padding:4px 6px;border-radius:3px;background:#fffef7;color:#151716;font-weight:800;font-size:clamp(10px,1.2vw,15px);line-height:1;box-shadow:0 2px 4px rgba(0,0,0,.42);white-space:nowrap;pointer-events:none}
 .gap{position:absolute;inset:2% 0 10%;border-radius:7px;background:linear-gradient(180deg,#edf0ed 0 6%,#aeb5b1 7% 10%,#858d88 11% 82%,#555d59 83% 88%,#dadbd5 89% 96%,#767c78 97%);box-shadow:inset 0 9px 18px rgba(0,0,0,.2),0 2px 5px rgba(0,0,0,.2);filter:saturate(.65)}
 .gap:after{content:"";position:absolute;inset:13% 9% 16%;border-radius:8px;background:radial-gradient(ellipse at 50% 88%,rgba(0,0,0,.28),transparent 58%),linear-gradient(90deg,rgba(255,255,255,.12),transparent 24% 76%,rgba(0,0,0,.12))}
 .total{position:absolute;top:3.5%;right:3.5%;z-index:90;min-width:94px;padding:10px 15px;border-radius:14px;background:rgba(15,21,22,.92);color:#fff;font-size:clamp(20px,3vw,34px);font-weight:800;text-align:center;box-shadow:0 7px 20px rgba(0,0,0,.28);pointer-events:none}
@@ -48,6 +48,15 @@ button{font:inherit}
 @media(max-width:700px){
  .arrow{width:52px;height:52px}.arrow.left{left:2%;top:43%}.arrow.right{right:2%;top:43%}.arrow.forward,.arrow.back{bottom:32%}
  .total{top:2.5%;right:4%;padding:8px 11px}.cart-image,.hands-top{width:116vw;height:52vh;bottom:-2%}.basket{width:65vw;height:15vh}.price{font-size:10px;padding:3px 4px}.drag-ghost{width:76px;height:92px}
+}
+@media(max-aspect-ratio:16/9){
+ .scene.side-view .stage{width:100vw;height:100vh}
+ .scene.side-view .background.shelf-bg,.scene.side-view .shelf-layer{transform:scaleY(.79)}
+}
+@media(max-aspect-ratio:4/5){
+ .scene.side-view .background.shelf-bg,.scene.side-view .shelf-layer{transform:scaleY(.66)}
+ .scene.side-view .cart-image,.scene.side-view .hands-top{height:46vh;bottom:-3%}
+ .scene.side-view .basket{height:13vh}
 }
 @media(max-height:570px){.cart-image,.hands-top{height:67vh;bottom:-11%}.arrow.forward,.arrow.back{bottom:31%}.basket{height:21vh}}
 </style>
