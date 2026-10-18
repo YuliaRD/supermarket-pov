@@ -40,16 +40,22 @@ button{font:inherit}
 .item img{position:absolute;inset:-3%;width:106%;height:106%;object-fit:contain;pointer-events:none}
 .spark{position:absolute;width:10px;height:10px;border-radius:50%;background:white;box-shadow:0 0 18px 5px white;pointer-events:none;animation:spark .48s ease-out forwards;z-index:100}@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
 .loader{position:absolute;inset:0;z-index:200;display:grid;place-items:center;background:linear-gradient(135deg,#37d1cb,#087f91);transition:opacity .35s;pointer-events:none}.loader.done{opacity:0}.gem{width:44px;height:62px;background:linear-gradient(135deg,#dfffff,#34e3d7 52%,#087f91);clip-path:polygon(50% 0,92% 24%,74% 78%,50% 100%,26% 78%,8% 24%);animation:float 1s ease-in-out infinite;filter:drop-shadow(0 8px 9px rgba(0,70,78,.35))}@keyframes float{50%{transform:translateY(-9px)}}
+.sound-toggle{position:absolute;left:18px;top:18px;z-index:130;width:48px;height:48px;border:2px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(244,255,255,.78);box-shadow:0 8px 22px rgba(3,78,91,.22);color:#087f91;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(9px);transition:transform .18s,background .18s,color .18s}
+.sound-toggle:hover{transform:scale(1.06);background:#fff}.sound-toggle svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.sound-toggle .sound-off{display:none}.sound-toggle.muted .sound-on{display:none}.sound-toggle.muted .sound-off{display:block}.sound-toggle.muted{color:#a65364;background:rgba(255,247,249,.84)}
 @media(max-width:900px){
  .character-zone{left:0;right:0;top:0;bottom:35%}.avatar{height:min(63svh,145vw)}
  .category-dock{left:50%;right:auto;top:auto;bottom:31.5%;transform:translateX(-50%);display:flex;width:94%;overflow-x:auto;padding:7px;gap:8px;justify-content:flex-start;scrollbar-width:none}.category-dock::-webkit-scrollbar{display:none}.cat{flex:0 0 52px;width:52px;height:52px}.cat svg{width:25px;height:25px}
- .wardrobe{left:2%;right:2%;bottom:1.5%;top:auto;width:auto;height:31%;border-radius:20px}.wardrobe-head{min-height:44px;font-size:16px}.wardrobe-head svg{width:23px;height:23px}.subcats{padding:6px 8px 0}.subcat{min-height:32px;padding:4px 10px;font-size:12px}.items{display:flex;gap:10px;padding:8px;overflow-x:auto;overflow-y:hidden}.item{flex:0 0 96px;height:calc(100% - 2px);aspect-ratio:auto}
+ .wardrobe{left:2%;right:2%;bottom:1.5%;top:auto;width:auto;height:31%;border-radius:20px}.wardrobe-head{min-height:44px;font-size:16px}.wardrobe-head svg{width:23px;height:23px}.subcats{padding:6px 8px 0}.subcat{min-height:32px;padding:4px 10px;font-size:12px}.items{display:flex;gap:10px;padding:8px;overflow-x:auto;overflow-y:hidden}.item{flex:0 0 96px;height:calc(100% - 2px);aspect-ratio:auto}.sound-toggle{left:12px;top:12px;width:43px;height:43px}.sound-toggle svg{width:22px;height:22px}
 }
 @media(max-width:460px){.character-zone{bottom:38%}.avatar{height:min(57svh,140vw)}.category-dock{bottom:34.5%}.wardrobe{height:34%}.cat{flex-basis:48px;width:48px;height:48px}}
 </style>
 </head>
 <body>
 <main class="game" id="game">
+  <button class="sound-toggle" id="soundToggle" type="button" aria-label="Выключить музыку">
+    <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H4v6h3l4 4V5Z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M18 6a8 8 0 0 1 0 12"/></svg>
+    <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H4v6h3l4 4V5Z"/><path d="m16 10 5 5m0-5-5 5"/></svg>
+  </button>
   <section class="character-zone" aria-label="Персонаж">
     <div class="avatar" id="avatar">
       <img class="layer outerwear-back" id="layer-outerwear-back" alt="">
@@ -159,6 +165,42 @@ const categories={
 const chosen={tops:null,outerwear:null,pants:null,skirts:null,dresses:null,shoes:null,bags:null,hats:null,glasses:null,scarves:null,jewelry:null,belts:null};
 let activeCategory='tops',activeAccessory='glasses';
 const cats=document.getElementById('categories'),items=document.getElementById('items'),title=document.getElementById('wardrobeTitle'),avatar=document.getElementById('avatar'),subcats=document.getElementById('subcategories');
+const soundToggle=document.getElementById('soundToggle');
+let audioContext=null,masterGain=null,musicTimer=null,musicBar=0,musicEnabled=true,musicStarted=false;
+const cozyChords=[
+ [261.63,329.63,392,493.88],
+ [220,261.63,329.63,392],
+ [293.66,349.23,440,523.25],
+ [196,246.94,293.66,392]
+];
+function playSoftTone(frequency,when,duration=.78,level=.065){
+ const oscillator=audioContext.createOscillator(),shimmer=audioContext.createOscillator(),gain=audioContext.createGain(),filter=audioContext.createBiquadFilter();
+ oscillator.type='triangle';oscillator.frequency.setValueAtTime(frequency,when);
+ shimmer.type='sine';shimmer.frequency.setValueAtTime(frequency*2,when);
+ filter.type='lowpass';filter.frequency.setValueAtTime(1450,when);filter.Q.setValueAtTime(.6,when);
+ gain.gain.setValueAtTime(.0001,when);gain.gain.exponentialRampToValueAtTime(level,when+.045);gain.gain.exponentialRampToValueAtTime(.0001,when+duration);
+ oscillator.connect(filter);shimmer.connect(filter);filter.connect(gain);gain.connect(masterGain);
+ oscillator.start(when);shimmer.start(when);oscillator.stop(when+duration+.04);shimmer.stop(when+duration+.04)
+}
+function scheduleCozyBar(){
+ if(!audioContext||!musicEnabled)return;
+ const chord=cozyChords[musicBar%cozyChords.length],now=audioContext.currentTime+.06;
+ [0,1,2,1].forEach((note,index)=>playSoftTone(chord[note],now+index*.42,.72,index===0?.055:.045));
+ playSoftTone(chord[0]/2,now,1.62,.035);musicBar++
+}
+function startMusic(){
+ if(musicStarted||!musicEnabled)return;
+ const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;
+ audioContext=new AudioContextClass();masterGain=audioContext.createGain();masterGain.gain.setValueAtTime(.24,audioContext.currentTime);masterGain.connect(audioContext.destination);
+ musicStarted=true;audioContext.resume().catch(()=>{});scheduleCozyBar();musicTimer=setInterval(scheduleCozyBar,1680)
+}
+function setMusicEnabled(enabled){
+ musicEnabled=enabled;soundToggle.classList.toggle('muted',!enabled);soundToggle.setAttribute('aria-label',enabled?'Выключить музыку':'Включить музыку');
+ if(enabled){startMusic();if(audioContext){audioContext.resume().catch(()=>{});masterGain.gain.setTargetAtTime(.24,audioContext.currentTime,.08);scheduleCozyBar()}}
+ else if(audioContext)masterGain.gain.setTargetAtTime(.0001,audioContext.currentTime,.06)
+}
+document.addEventListener('pointerdown',startMusic,{once:true,capture:true});
+soundToggle.addEventListener('click',event=>{event.stopPropagation();setMusicEnabled(!musicEnabled)});
 function svg(key){return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[key]}</svg>`}
 {const b=document.createElement('button');b.className='cat reset-look';b.type='button';b.setAttribute('aria-label','Снять всё');b.innerHTML=svg('reset');b.onclick=resetLook;cats.append(b)}
 Object.keys(categories).forEach(key=>{const b=document.createElement('button');b.className='cat';b.dataset.key=key;b.type='button';b.setAttribute('aria-label',categories[key].name);b.innerHTML=svg(key);b.onclick=()=>openCategory(key);cats.append(b)});
