@@ -173,7 +173,7 @@ function syncBaseLayer(){
  const direct=chosen.dresses!==null&&chosen.outerwear===null;
  avatar.classList.toggle('direct-dress',direct);
  if(direct){const dress=selections.dresses.files[chosen.dresses];base.src=path(chosen.shoes===null?dress.bareBase:dress.bakedBase);return}
- base.src=chosen.dresses===null?'assets/base-avatar-no-feet.png?v=86':path('base-avatar-dress-legs-v86.webp')
+ base.src=chosen.dresses===null?path('base-avatar-no-feet.png'):path('base-avatar-dress-legs-v86.webp')
 }
 function syncTopLayer(){
  if(chosen.tops===null||chosen.dresses!==null){setLayer('top',null);return}
