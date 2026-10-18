@@ -52,10 +52,13 @@ button{font:inherit}
 </head>
 <body>
 <main class="game" id="game">
-  <button class="sound-toggle" id="soundToggle" type="button" aria-label="Выключить музыку">
+  <button class="sound-toggle muted" id="soundToggle" type="button" aria-label="Включить музыку">
     <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H4v6h3l4 4V5Z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M18 6a8 8 0 0 1 0 12"/></svg>
     <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H4v6h3l4 4V5Z"/><path d="m16 10 5 5m0-5-5 5"/></svg>
   </button>
+  <audio id="backgroundMusic" preload="auto" loop playsinline>
+    <source src="assets/cozy-boutique.m4a?v=88" type="audio/mp4">
+  </audio>
   <section class="character-zone" aria-label="Персонаж">
     <div class="avatar" id="avatar">
       <img class="layer outerwear-back" id="layer-outerwear-back" alt="">
@@ -166,41 +169,27 @@ const chosen={tops:null,outerwear:null,pants:null,skirts:null,dresses:null,shoes
 let activeCategory='tops',activeAccessory='glasses';
 const cats=document.getElementById('categories'),items=document.getElementById('items'),title=document.getElementById('wardrobeTitle'),avatar=document.getElementById('avatar'),subcats=document.getElementById('subcategories');
 const soundToggle=document.getElementById('soundToggle');
-let audioContext=null,masterGain=null,musicTimer=null,musicBar=0,musicEnabled=true,musicStarted=false;
-const cozyChords=[
- [261.63,329.63,392,493.88],
- [220,261.63,329.63,392],
- [293.66,349.23,440,523.25],
- [196,246.94,293.66,392]
-];
-function playSoftTone(frequency,when,duration=.78,level=.065){
- const oscillator=audioContext.createOscillator(),shimmer=audioContext.createOscillator(),gain=audioContext.createGain(),filter=audioContext.createBiquadFilter();
- oscillator.type='triangle';oscillator.frequency.setValueAtTime(frequency,when);
- shimmer.type='sine';shimmer.frequency.setValueAtTime(frequency*2,when);
- filter.type='lowpass';filter.frequency.setValueAtTime(1450,when);filter.Q.setValueAtTime(.6,when);
- gain.gain.setValueAtTime(.0001,when);gain.gain.exponentialRampToValueAtTime(level,when+.045);gain.gain.exponentialRampToValueAtTime(.0001,when+duration);
- oscillator.connect(filter);shimmer.connect(filter);filter.connect(gain);gain.connect(masterGain);
- oscillator.start(when);shimmer.start(when);oscillator.stop(when+duration+.04);shimmer.stop(when+duration+.04)
-}
-function scheduleCozyBar(){
- if(!audioContext||!musicEnabled)return;
- const chord=cozyChords[musicBar%cozyChords.length],now=audioContext.currentTime+.06;
- [0,1,2,1].forEach((note,index)=>playSoftTone(chord[note],now+index*.42,.72,index===0?.055:.045));
- playSoftTone(chord[0]/2,now,1.62,.035);musicBar++
-}
-function startMusic(){
- if(musicStarted||!musicEnabled)return;
- const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;
- audioContext=new AudioContextClass();masterGain=audioContext.createGain();masterGain.gain.setValueAtTime(.24,audioContext.currentTime);masterGain.connect(audioContext.destination);
- musicStarted=true;audioContext.resume().catch(()=>{});scheduleCozyBar();musicTimer=setInterval(scheduleCozyBar,1680)
+const backgroundMusic=document.getElementById('backgroundMusic');
+let musicEnabled=false;
+backgroundMusic.volume=.32;
+function updateMusicButton(enabled){
+ soundToggle.classList.toggle('muted',!enabled);
+ soundToggle.setAttribute('aria-label',enabled?'Выключить музыку':'Включить музыку')
 }
 function setMusicEnabled(enabled){
- musicEnabled=enabled;soundToggle.classList.toggle('muted',!enabled);soundToggle.setAttribute('aria-label',enabled?'Выключить музыку':'Включить музыку');
- if(enabled){startMusic();if(audioContext){audioContext.resume().catch(()=>{});masterGain.gain.setTargetAtTime(.24,audioContext.currentTime,.08);scheduleCozyBar()}}
- else if(audioContext)masterGain.gain.setTargetAtTime(.0001,audioContext.currentTime,.06)
+ musicEnabled=enabled;
+ if(!enabled){backgroundMusic.pause();updateMusicButton(false);return}
+ backgroundMusic.muted=false;backgroundMusic.volume=.32;
+ const attempt=backgroundMusic.play();
+ if(attempt)attempt.then(()=>updateMusicButton(true)).catch(()=>{musicEnabled=false;updateMusicButton(false)})
 }
-document.addEventListener('pointerdown',startMusic,{once:true,capture:true});
+document.addEventListener('pointerdown',event=>{
+ if(!musicEnabled&&!event.target.closest('#soundToggle'))setMusicEnabled(true)
+},{capture:true});
 soundToggle.addEventListener('click',event=>{event.stopPropagation();setMusicEnabled(!musicEnabled)});
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&musicEnabled)backgroundMusic.play().catch(()=>{})
+});
 function svg(key){return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[key]}</svg>`}
 {const b=document.createElement('button');b.className='cat reset-look';b.type='button';b.setAttribute('aria-label','Снять всё');b.innerHTML=svg('reset');b.onclick=resetLook;cats.append(b)}
 Object.keys(categories).forEach(key=>{const b=document.createElement('button');b.className='cat';b.dataset.key=key;b.type='button';b.setAttribute('aria-label',categories[key].name);b.innerHTML=svg(key);b.onclick=()=>openCategory(key);cats.append(b)});
