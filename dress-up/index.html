@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Осенняя примерочная</title>
+<meta name="description" content="Интерактивная игра-передевалка с осенним гардеробом">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 7c-6 0-10 4-10 9 0 3 2 6 5 7L9 38c-6 5-2 15 6 15h34c8 0 12-10 6-15L37 23c3-1 5-4 5-7 0-5-4-9-10-9Z' fill='%23fff' stroke='%230b9fa8' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#143f4d;--teal:#2cc9c7;--teal-dark:#078a98;--panel:rgba(239,255,255,.89);--white:#fff;--shadow:0 16px 45px rgba(3,78,91,.28)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;font-family:Arial,sans-serif;user-select:none;background:#1bbab8}
+button{font:inherit}
+.game{position:fixed;inset:0;overflow:hidden;background:radial-gradient(circle at 45% 48%,#d7ffff 0 10%,#79e4df 31%,#23c3c2 57%,#087f91 100%)}
+.game:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 43% 88%,rgba(0,65,76,.25),transparent 26%),linear-gradient(115deg,rgba(255,255,255,.12),transparent 36% 72%,rgba(0,52,69,.12))}
+.character-zone{position:absolute;left:4%;top:1.5%;bottom:1.5%;right:34%;display:grid;place-items:center}
+.avatar{position:relative;height:min(96vh,calc((100vw - 420px)*1.34));max-width:96vw;aspect-ratio:2/3;contain:layout paint;filter:drop-shadow(0 18px 14px rgba(0,62,72,.22));transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.avatar.pulse{animation:dressPulse .32s ease}@keyframes dressPulse{50%{transform:scale(1.012)}}
+.layer{position:absolute;object-fit:contain;pointer-events:none;transition:opacity .18s ease;opacity:1}
+.base{z-index:12;inset:0;width:100%;height:100%}.layer:not(.base){inset:0;width:100%;height:100%;left:0;transform:none;object-fit:contain}
+.outerwear-back{z-index:9}.feet{z-index:14}.shoes{z-index:18}.lower{z-index:22}.top{z-index:28}.dress{z-index:31}
+.avatar.direct-dress .feet,.avatar.direct-dress .head-overlay,.avatar.direct-dress .hat-hair-front,.avatar.direct-dress .hands-overlay{opacity:0!important}
+.avatar.tall-boots.has-pants .lower{clip-path:inset(0 0 30.73% 0)}
+.belt{z-index:35}.outerwear-front{z-index:41}.scarf{z-index:47}
+.bag{z-index:50}.overlay{object-fit:contain}.head-overlay{z-index:68}.headwear{z-index:74}.hat-hair-front{z-index:75}.jewelry{z-index:78}.glasses{z-index:79}.hands-overlay{z-index:82}
+.category-dock{position:absolute;right:31.5%;top:50%;transform:translateY(-50%);z-index:90;display:grid;grid-template-columns:46px;gap:6px}
+.cat{width:46px;height:46px;border:2px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(244,255,255,.72);box-shadow:0 7px 18px rgba(5,91,102,.2);color:#0f7180;display:grid;place-items:center;cursor:pointer;transition:.18s;backdrop-filter:blur(8px)}
+.cat svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cat:hover{transform:scale(1.06);background:#fff}.cat.active{color:#fff;background:linear-gradient(145deg,#43d9d1,#078a98);transform:scale(1.08);box-shadow:0 9px 22px rgba(0,92,108,.34),inset 0 1px 0 rgba(255,255,255,.4)}
+.cat.reset-look{color:#a65364;background:rgba(255,247,249,.84);border-color:rgba(255,255,255,.96)}
+.cat.reset-look:hover{color:#fff;background:linear-gradient(145deg,#e88998,#a9465b)}
+.wardrobe{position:absolute;right:2.2%;top:4%;bottom:4%;width:min(30vw,360px);z-index:80;border:1px solid rgba(255,255,255,.75);border-radius:22px;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden;display:flex;flex-direction:column}
+.wardrobe-head{min-height:60px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);font-weight:800;font-size:18px;border-bottom:1px solid rgba(10,117,128,.15);background:rgba(255,255,255,.45)}
+.wardrobe-head svg{width:27px;height:27px;fill:none;stroke:#078a98;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.subcats{display:none;gap:5px;padding:8px 8px 0;overflow-x:auto;scrollbar-width:none}.subcats::-webkit-scrollbar{display:none}.subcats.show{display:flex}
+.subcat{flex:1 0 auto;min-height:32px;padding:5px 8px;border:1px solid rgba(7,138,152,.22);border-radius:999px;background:rgba(255,255,255,.66);color:#25616b;font-weight:700;font-size:12px;cursor:pointer}.subcat.active{color:#fff;background:#078f9c;border-color:#078f9c}
+.items{padding:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow:auto;overscroll-behavior:contain}
+.item{position:relative;aspect-ratio:1/1.18;border:2px solid rgba(17,132,143,.16);border-radius:13px;background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(183,235,232,.72));overflow:hidden;cursor:pointer;transition:.17s;box-shadow:0 5px 12px rgba(8,93,102,.1)}
+.item:hover{transform:translateY(-2px);border-color:#36bfc2}.item.active{border:3px solid #08a7ae;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 7px 17px rgba(1,111,122,.25)}
+.item img{position:absolute;inset:-3%;width:106%;height:106%;object-fit:contain;pointer-events:none}
+.spark{position:absolute;width:10px;height:10px;border-radius:50%;background:white;box-shadow:0 0 18px 5px white;pointer-events:none;animation:spark .48s ease-out forwards;z-index:100}@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+.loader{position:absolute;inset:0;z-index:200;display:grid;place-items:center;background:linear-gradient(135deg,#37d1cb,#087f91);transition:opacity .35s;pointer-events:none}.loader.done{opacity:0}.gem{width:44px;height:62px;background:linear-gradient(135deg,#dfffff,#34e3d7 52%,#087f91);clip-path:polygon(50% 0,92% 24%,74% 78%,50% 100%,26% 78%,8% 24%);animation:float 1s ease-in-out infinite;filter:drop-shadow(0 8px 9px rgba(0,70,78,.35))}@keyframes float{50%{transform:translateY(-9px)}}
+@media(max-width:900px){
+ .character-zone{left:0;right:0;top:0;bottom:35%}.avatar{height:min(63svh,145vw)}
+ .category-dock{left:50%;right:auto;top:auto;bottom:31.5%;transform:translateX(-50%);display:flex;width:94%;overflow-x:auto;padding:7px;gap:8px;justify-content:flex-start;scrollbar-width:none}.category-dock::-webkit-scrollbar{display:none}.cat{flex:0 0 52px;width:52px;height:52px}.cat svg{width:25px;height:25px}
+ .wardrobe{left:2%;right:2%;bottom:1.5%;top:auto;width:auto;height:31%;border-radius:20px}.wardrobe-head{min-height:44px;font-size:16px}.wardrobe-head svg{width:23px;height:23px}.subcats{padding:6px 8px 0}.subcat{min-height:32px;padding:4px 10px;font-size:12px}.items{display:flex;gap:10px;padding:8px;overflow-x:auto;overflow-y:hidden}.item{flex:0 0 96px;height:calc(100% - 2px);aspect-ratio:auto}
+}
+@media(max-width:460px){.character-zone{bottom:38%}.avatar{height:min(57svh,140vw)}.category-dock{bottom:34.5%}.wardrobe{height:34%}.cat{flex-basis:48px;width:48px;height:48px}}
+</style>
+</head>
+<body>
+<main class="game" id="game">
+  <section class="character-zone" aria-label="Персонаж">
+    <div class="avatar" id="avatar">
+      <img class="layer outerwear-back" id="layer-outerwear-back" alt="">
+      <img class="layer base" id="layer-base" src="" data-asset="base-avatar-no-feet.png" alt="">
+      <img class="layer feet" src="" data-asset="feet-overlay.webp" alt="">
+      <img class="layer shoes" id="layer-shoes" alt="">
+      <img class="layer lower" id="layer-lower" alt="">
+      <img class="layer top" id="layer-top" alt="">
+      <img class="layer dress" id="layer-dress" alt="">
+      <img class="layer belt" id="layer-belt" alt="">
+      <img class="layer scarf" id="layer-scarf" alt="">
+      <img class="layer outerwear-front" id="layer-outerwear-front" alt="">
+      <img class="layer bag" id="layer-bag" alt="">
+      <img class="layer overlay head-overlay" src="" data-asset="head-hair-overlay.png" alt="">
+      <img class="layer headwear" id="layer-headwear" alt="">
+      <img class="layer overlay hat-hair-front" src="" data-asset="hat-hair-front.webp" alt="">
+      <img class="layer jewelry" id="layer-jewelry" alt="">
+      <img class="layer glasses" id="layer-glasses" alt="">
+      <img class="layer overlay hands-overlay" src="" data-asset="hands-overlay-clean.webp" alt="">
+    </div>
+  </section>
+  <nav class="category-dock" id="categories" aria-label="Категории одежды"></nav>
+  <aside class="wardrobe">
+    <div class="wardrobe-head" id="wardrobeTitle"></div>
+    <div class="subcats" id="subcategories"></div>
+    <div class="items" id="items"></div>
+  </aside>
+  <div class="loader" id="loader"><div class="gem"></div></div>
+</main>
+<script>window.EMBEDDED_ASSETS={};</script>
+<script src="assets-01.js"></script>
+<script src="assets-02.js"></script>
+<script src="assets-03.js"></script>
+<script src="assets-04.js"></script>
+<script src="assets-05.js"></script>
+<script src="assets-06.js"></script>
+<script src="assets-07.js"></script>
+<script src="assets-08.js"></script>
+<script src="assets-09.js"></script>
+<script src="assets-10.js"></script>
+<script src="assets-11.js"></script>
+<script src="assets-12.js"></script>
+<script src="assets-13.js"></script>
+<script src="assets-14.js"></script>
+<script src="assets-15.js"></script>
+<script src="assets-16.js"></script>
+<script src="assets-17.js"></script>
+<script src="assets-18.js"></script>
+<script src="assets-19.js"></script>
+<script>
+(()=>{
+const icons={
+ reset:'<path d="M8 7H4v-4"/><path d="M4.8 7.2A8 8 0 1 1 4 15"/><path d="M9 10l6 6M15 10l-6 6"/>',
+ tops:'<path d="M9 5l3-2 3 2 4 2-2 5-3-1v10H10V11l-3 1-2-5 4-2Z"/>',
+ outerwear:'<path d="M9 4l3 3 3-3 4 3-2 5-2-1v10H9V11l-2 1-2-5 4-3Z"/><path d="M12 7v14M9 11h6"/>',
+ pants:'<path d="M8 3h8l1 18h-4l-1-10-1 10H7L8 3Z"/>',
+ skirts:'<path d="M9 4h6l3 17H6L9 4Z"/>',
+ dresses:'<path d="M9 3l3 3 3-3 2 4-2 3 4 11H5l4-11-2-3 2-4Z"/>',
+ shoes:'<path d="M4 15v3h7l2-2 2 2h5v-3l-5-2-2-5H9l1 7H4Z"/>',
+ bags:'<path d="M5 8h14l1 13H4L5 8Z"/><path d="M8 8a4 4 0 0 1 8 0"/>',
+ hats:'<path d="M6 13h12M8 13l1-7h6l1 7M4 16h16"/>',
+ accessories:'<circle cx="8" cy="11" r="3"/><circle cx="16" cy="11" r="3"/><path d="M11 11h2M5 10 3 9M19 10l2-1"/>'
+};
+const E=(file,style='',thumb=file)=>({file:'fitted/'+file.replace('.png','.webp'),style,thumb});
+const six=base=>Array.from({length:6},(_,i)=>E(`${base}-${i+1}.png`));
+const tops=()=>Array.from({length:6},(_,i)=>{const n=i+1;return {file:n===4?'fitted/top-4-approved-v62.webp':`fitted/top-${n}-approved-v31.webp`,underFile:n===4?'fitted/top-4-under-approved-v62.webp':`fitted/top-${n}-under-approved-v31.webp`,thumb:`fitted/top-${n}-thumb-v31.webp`}});
+const dresses=()=>Array.from({length:6},(_,i)=>{const n=i+1;return {file:`fitted/dress-${n}-shoulders-v66.webp`,bareBase:`fitted/dress-${n}-approved-figure-v81.png`,bakedBase:`fitted/dress-${n}-approved-shoes-v82.png`,underFile:`fitted/dress-${n}-under-v71.webp`,shortUnderFiles:{0:`fitted/dress-${n}-under-short-1-v71.webp`,3:`fitted/dress-${n}-under-short-4-v71.webp`,5:`fitted/dress-${n}-under-short-6-v71.webp`},thumb:`fitted/dress-${n}-approved-figure-v81.png`}});
+const pants=()=>Array.from({length:6},(_,i)=>({file:i===0?'fitted/pants-1-flare-v23.webp':`fitted/pants-${i+1}-master-v16.webp`,thumb:`pants-${i+1}.png`}));
+const skirts=()=>Array.from({length:6},(_,i)=>({file:`fitted/skirt-${i+1}-approved-v36.webp`,thumb:`fitted/skirt-${i+1}-thumb-v36.webp`}));
+const coatFronts=[
+ 'fitted/outerwear-1-master-v20.webp',
+ 'fitted/outerwear-2-shoulders-v28.webp',
+ 'fitted/outerwear-3-shoulders-v28.webp',
+ 'fitted/outerwear-4-master-v20.webp',
+ 'fitted/outerwear-5-wide-v38.webp',
+ 'fitted/outerwear-6-master-v20.webp'
+];
+const coats=()=>Array.from({length:6},(_,i)=>{const n=i+1,long=[2,3,5].includes(n);return {file:`fitted/outerwear-${n}-back.webp`,front:coatFronts[i],layerMode:long?'long':'short',thumb:`outerwear-${n}.png`}});
+const shoes=()=>Array.from({length:6},(_,i)=>({file:i===0?'fitted/shoes-1.webp':`fitted/shoes-${i+1}-redrawn-v21.webp`,thumb:`shoe-thumb-${i+1}.png`}));
+const hats=()=>six('hat').map((item,index)=>[
+ {file:'fitted/hat-1-brim-left-v61.webp',thumb:'hat-1.png'},
+ {file:'fitted/hat-2-approved-v29.webp',thumb:'hat-2.png'},
+ {file:'fitted/hat-3-approved-v11.webp',thumb:'hat-3.png'},
+ null,
+ {file:'fitted/hat-5-approved-v29.webp',thumb:'hat-5.png'},
+ null
+][index]||item);
+const selections={
+ tops:{name:'Верх',slot:'top',files:tops()},
+ outerwear:{name:'Верхняя одежда',slot:'outerwear',files:coats()},
+ pants:{name:'Брюки и джинсы',slot:'lower',files:pants()},
+ skirts:{name:'Юбки',slot:'lower',files:skirts()},
+ dresses:{name:'Платья',slot:'dress',files:dresses()},
+ shoes:{name:'Обувь',slot:'shoes',files:shoes()},
+ bags:{name:'Сумки',slot:'bag',files:six('bag')},
+ hats:{name:'Головные уборы',slot:'headwear',files:hats()},
+ glasses:{name:'Очки',slot:'glasses',files:[{file:'fitted/glasses-brown-aligned-v52.webp',thumb:'glasses-brown.png'},{file:'fitted/glasses-black-approved-v11.webp',thumb:'glasses-black.png'},{file:'fitted/glasses-gold-aligned-v52.webp',thumb:'glasses-gold.png'}]},
+ scarves:{name:'Шарфы',slot:'scarf',files:['brown','cream','burgundy'].map(x=>({file:`fitted/scarf-${x}-approved-v50.webp`,thumb:`scarf-${x}-approved-v50.png`}))},
+ jewelry:{name:'Украшения',slot:'jewelry',files:[E('jewelry-earrings-gold-earfit-v55.webp','z-index:69','jewelry-earrings.png'),E('jewelry-necklace-aligned-v87.webp','z-index:36','jewelry-necklace.png'),E('jewelry-earrings-silver-earfit-v55.webp','z-index:69','jewelry-earrings-silver.png')]},
+ belts:{name:'Ремни',slot:'belt',files:['brown','black','burgundy'].map(x=>({file:`fitted/belt-${x}-waist-v54.webp`,thumb:`belt-${x}.png`}))}
+};
+const accessoryKeys=['glasses','scarves','jewelry','belts'];
+const categories={
+ tops:selections.tops,outerwear:selections.outerwear,pants:selections.pants,skirts:selections.skirts,dresses:selections.dresses,shoes:selections.shoes,bags:selections.bags,hats:selections.hats,
+ accessories:{name:'Аксессуары'}
+};
+const chosen={tops:null,outerwear:null,pants:null,skirts:null,dresses:null,shoes:null,bags:null,hats:null,glasses:null,scarves:null,jewelry:null,belts:null};
+let activeCategory='tops',activeAccessory='glasses';
+const cats=document.getElementById('categories'),items=document.getElementById('items'),title=document.getElementById('wardrobeTitle'),avatar=document.getElementById('avatar'),subcats=document.getElementById('subcategories');
+function svg(key){return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[key]}</svg>`}
+{const b=document.createElement('button');b.className='cat reset-look';b.type='button';b.setAttribute('aria-label','Снять всё');b.innerHTML=svg('reset');b.onclick=resetLook;cats.append(b)}
+Object.keys(categories).forEach(key=>{const b=document.createElement('button');b.className='cat';b.dataset.key=key;b.type='button';b.setAttribute('aria-label',categories[key].name);b.innerHTML=svg(key);b.onclick=()=>openCategory(key);cats.append(b)});
+accessoryKeys.forEach(key=>{const b=document.createElement('button');b.className='subcat';b.dataset.key=key;b.type='button';b.textContent=selections[key].name;b.onclick=()=>{activeAccessory=key;renderAccessoryTabs();renderItems();warmCategory('accessories')};subcats.append(b)});
+const EMBEDDED_ASSETS=window.EMBEDDED_ASSETS;
+const ASSET_VERSION='87';
+function path(file){return EMBEDDED_ASSETS[file]||''}
+document.querySelectorAll('img[data-asset]').forEach(el=>el.src=path(el.dataset.asset));
+function setLayer(slot,item){const el=document.getElementById('layer-'+slot);el.src=item?path(item.file):'';el.style.cssText=(item?.style||'')+';opacity:'+(item?1:0)}
+function syncBaseLayer(){
+ const base=document.getElementById('layer-base');
+ const direct=chosen.dresses!==null&&chosen.outerwear===null;
+ avatar.classList.toggle('direct-dress',direct);
+ if(direct){const dress=selections.dresses.files[chosen.dresses];base.src=path(chosen.shoes===null?dress.bareBase:dress.bakedBase);return}
+ base.src=chosen.dresses===null?'assets/base-avatar-no-feet.png?v=86':path('base-avatar-dress-legs-v86.webp')
+}
+function syncTopLayer(){
+ if(chosen.tops===null||chosen.dresses!==null){setLayer('top',null);return}
+ const top=selections.tops.files[chosen.tops];
+ setLayer('top',chosen.outerwear===null?top:{...top,file:top.underFile})
+}
+function syncDressLayer(){
+ if(chosen.dresses===null){setLayer('dress',null);return}
+ const dress=selections.dresses.files[chosen.dresses];
+ if(chosen.outerwear===null){setLayer('dress',null);return}
+ const coat=selections.outerwear.files[chosen.outerwear];
+ setLayer('dress',{...dress,file:coat.layerMode==='short'?dress.shortUnderFiles[chosen.outerwear]:dress.underFile})
+}
+function setOuterwear(item){setLayer('outerwear-back',item?{...item,style:item.backStyle||''}:null);setLayer('outerwear-front',item?{...item,file:item.front,style:item.frontStyle||''}:null);avatar.classList.toggle('has-outerwear',!!item);syncTopLayer();syncDressLayer()}
+function updateFitClasses(){avatar.classList.toggle('tall-boots',chosen.shoes===4);avatar.classList.toggle('has-pants',chosen.dresses===null&&chosen.pants!==null)}
+function activeKey(){return activeCategory==='accessories'?activeAccessory:activeCategory}
+function applyChoice(key,index){
+ const cfg=selections[key];chosen[key]=index;
+ if(key==='pants')chosen.skirts=null;
+ if(key==='skirts')chosen.pants=null;
+ if(key==='dresses'){syncDressLayer();setLayer('top',null);setLayer('lower',null)}
+ else if(cfg.slot==='top'||cfg.slot==='lower'){chosen.dresses=null;setLayer('dress',null);cfg.slot==='top'?syncTopLayer():setLayer(cfg.slot,cfg.files[index])}
+ else if(cfg.slot==='outerwear')setOuterwear(cfg.files[index]);
+ else setLayer(cfg.slot,cfg.files[index]);
+ syncBaseLayer();
+ updateFitClasses();
+ avatar.classList.remove('pulse');void avatar.offsetWidth;avatar.classList.add('pulse');burst();renderItems()
+}
+function resetLook(){
+ Object.keys(chosen).forEach(key=>chosen[key]=null);
+ setOuterwear(null);
+ ['shoes','lower','top','dress','belt','scarf','bag','headwear','jewelry','glasses'].forEach(slot=>setLayer(slot,null));
+ syncBaseLayer();
+ updateFitClasses();
+ avatar.classList.remove('pulse');void avatar.offsetWidth;avatar.classList.add('pulse');burst();renderItems()
+}
+function renderAccessoryTabs(){subcats.querySelectorAll('.subcat').forEach(b=>b.classList.toggle('active',b.dataset.key===activeAccessory))}
+function warmCategory(key){const cfg=selections[key==='accessories'?activeAccessory:key];cfg.files.flatMap(i=>[i.file,i.bareBase,i.bakedBase,i.front,i.underFile,...Object.values(i.shortUnderFiles||{})].filter(Boolean)).forEach(file=>{const img=new Image;img.src=path(file)})}
+function openCategory(key){
+ activeCategory=key;
+ document.querySelectorAll('.cat').forEach(b=>b.classList.toggle('active',b.dataset.key===key));
+ title.innerHTML=svg(key)+`<span>${categories[key].name}</span>`;
+ subcats.classList.toggle('show',key==='accessories');
+ if(key==='accessories')renderAccessoryTabs();
+ renderItems();warmCategory(key)
+}
+function renderItems(){
+ const key=activeKey(),cfg=selections[key];items.replaceChildren();
+ cfg.files.forEach((item,i)=>{const b=document.createElement('button');b.className='item'+(chosen[key]===i?' active':'');b.type='button';b.setAttribute('aria-label',cfg.name+' '+(i+1));b.innerHTML=`<img src="${path(item.thumb||item.file)}" alt="" loading="lazy" decoding="async">`;b.onclick=()=>applyChoice(key,i);items.append(b)})
+}
+function burst(){for(let i=0;i<7;i++){const s=document.createElement('i');s.className='spark';s.style.left=(45+Math.random()*10)+'%';s.style.top=(40+Math.random()*25)+'%';s.style.setProperty('--dx',(Math.random()*120-60)+'px');s.style.setProperty('--dy',(Math.random()*120-60)+'px');avatar.append(s);setTimeout(()=>s.remove(),500)}}
+setOuterwear(null);updateFitClasses();openCategory(activeCategory);
+const preload=['base-avatar-no-feet.png','base-avatar-dress-v71.webp','feet-overlay.webp','head-hair-overlay.png','hat-hair-front.webp','hands-overlay-clean.webp'].map(path);
+Promise.all(preload.map(src=>new Promise(res=>{const i=new Image;i.onload=i.onerror=res;i.src=src}))).then(()=>{document.getElementById('loader').classList.add('done');setTimeout(()=>document.getElementById('loader').remove(),400)});
+const context=document.modelContext;if(context?.registerTool){try{void Promise.resolve(context.registerTool({name:'choose_outfit',title:'Собрать образ',description:'Выбирает по одному предмету в указанных категориях и сразу обновляет образ девушки.',inputSchema:{type:'object',properties:Object.fromEntries(Object.keys(selections).map(k=>[k,{type:'integer',minimum:1,maximum:selections[k].files.length}])),additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Нужен объект с категориями');for(const [key,value] of Object.entries(input)){if(!selections[key]||!Number.isInteger(value)||value<1||value>selections[key].files.length)throw new Error('Некорректный выбор: '+key)}for(const [key,value] of Object.entries(input))applyChoice(key,value-1);return {selected:Object.fromEntries(Object.entries(chosen).filter(([,v])=>v!==null).map(([k,v])=>[k,v+1]))}}})).catch(()=>{})}catch{}}
+})();
+</script>
+</body>
+</html>
