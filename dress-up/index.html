@@ -57,7 +57,7 @@ button{font:inherit}
     <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H4v6h3l4 4V5Z"/><path d="m16 10 5 5m0-5-5 5"/></svg>
   </button>
   <audio id="backgroundMusic" preload="auto" loop playsinline>
-    <source src="assets/cozy-boutique.m4a?v=88" type="audio/mp4">
+    <source src="assets/its-the-sims.mp3?v=89" type="audio/mpeg">
   </audio>
   <section class="character-zone" aria-label="Персонаж">
     <div class="avatar" id="avatar">
@@ -171,7 +171,7 @@ const cats=document.getElementById('categories'),items=document.getElementById('
 const soundToggle=document.getElementById('soundToggle');
 const backgroundMusic=document.getElementById('backgroundMusic');
 let musicEnabled=false;
-backgroundMusic.volume=.32;
+backgroundMusic.volume=.22;
 function updateMusicButton(enabled){
  soundToggle.classList.toggle('muted',!enabled);
  soundToggle.setAttribute('aria-label',enabled?'Выключить музыку':'Включить музыку')
@@ -179,7 +179,7 @@ function updateMusicButton(enabled){
 function setMusicEnabled(enabled){
  musicEnabled=enabled;
  if(!enabled){backgroundMusic.pause();updateMusicButton(false);return}
- backgroundMusic.muted=false;backgroundMusic.volume=.32;
+ backgroundMusic.muted=false;backgroundMusic.volume=.22;
  const attempt=backgroundMusic.play();
  if(attempt)attempt.then(()=>updateMusicButton(true)).catch(()=>{musicEnabled=false;updateMusicButton(false)})
 }
